@@ -32,6 +32,4 @@ If you use VSCode, you cann install the remote container plugin and use this con
     "terminal.integrated.shell.linux": "/bin/bash",
   }
 }
-
-
 ```

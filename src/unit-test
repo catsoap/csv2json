@@ -66,6 +66,10 @@ function test_CSV2JSON_run(&$report)
     }
 ]',
         ],
+        'run-with-complex-conf' => [
+            'options' => ['f' => 'testdata/complex.csv','d' => 'testdata/complex.conf'],
+            'expected' => '[{"name":"foo","id":5,"date":"2020-05-03","active":true,"price":12.1},{"name":"foo","id":9,"date":"2020-05-03","active":false,"price":3.3},{"name":"bar","id":1,"date":"2020-03-21","active":true,"price":5.5},{"name":"boo","id":4,"date":"2020-03-14","active":false,"price":9.3},{"name":"foo","id":12,"date":"2020-05-07","active":true,"price":10},{"name":"boo","id":5,"date":"2020-02-19","active":false,"price":12},{"name":"far","id":10,"date":"2020-04-30","active":false,"price":7}]',
+        ],
     ];
 
     foreach ($cases as $name => $c) {

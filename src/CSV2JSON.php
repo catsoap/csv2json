@@ -11,8 +11,8 @@ class CSV2JSON
         'datetime' => '/([12]\d{3}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])) (?:[01]\d|2[0123]):(?:[012345]\d):(?:[012345]\d)/',
     ];
 
-    private const BOOL_TYPE_TRUTHY = ['true', 1, 'on', 'yes'];
-    private const BOOL_TYPE_FALSY = ['false', 0, 'off', 'no'];
+    private const BOOL_TYPE_TRUTHY = ['true', '1', 'on', 'yes'];
+    private const BOOL_TYPE_FALSY = ['false', '0', 'off', 'no'];
 
     private const OPTION_SHORTKEY_CSV = 'f';
     private const OPTION_SHORTKEY_DESC = 'd';
@@ -198,7 +198,7 @@ class CSV2JSON
         $nullable = strpos($type, '?') === 0;
         $type = $nullable ? substr($type, 1) : $type;
 
-        if (empty($value)) {
+        if ('' === $value) {
             if (!$nullable) {
                 throw new \Exception(sprintf("column '%s' at line %d cannot be empty", $column, $this->index));
             }
@@ -213,13 +213,15 @@ class CSV2JSON
                 $truthy = in_array($value, self::BOOL_TYPE_TRUTHY);
                 $falsy = in_array($value, self::BOOL_TYPE_FALSY);
 
-                if (!$truthy || !$falsy) {
+                if (!$truthy && !$falsy) {
                     throw new \Exception(sprintf(
                         "at column %s, value '%s' is not a valid bool",
                         $column,
                         $value,
                     ));
                 }
+
+                $value = $truthy ?? false;
             } else {
                 preg_match(self::DATETIME_REGEXES[$type], $value, $matches);
                 if (empty($matches)) {
@@ -232,7 +234,6 @@ class CSV2JSON
                 }
             }
         }
-
 
         return $value;
     }
