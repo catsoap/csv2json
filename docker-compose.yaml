@@ -1,0 +1,17 @@
+version: "3"
+services:
+  php:
+    build:
+      args:
+        UID: ${UID}
+        GID: ${GID}
+      context: ./infra/php
+    stdin_open: true # keeps container alive
+    environment:
+      SKIP_DOCKER: ${SKIP_DOCKER}
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - .:/workdir

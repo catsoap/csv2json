@@ -1,0 +1,186 @@
+#!/usr/bin/env php
+<?php
+
+require 'CSV2JSON.php';
+
+$report = [];
+
+test_new_CSV2JSON_with_exception($report);
+test_CSV2JSON_run_with_exception($report);
+test_CSV2JSON_run($report);
+printReport($report);
+
+function test_CSV2JSON_run(&$report)
+{
+    $cases = [
+        'run-with-base-conf' => [
+            'options' => ['f' => 'testdata/basic.csv','d' => 'testdata/basic.conf'],
+            'expected' => '[{"name":"foo","id":5,"date":"2020-05-03"},{"name":"foo","id":9,"date":"2020-05-03"},{"name":"bar","id":1,"date":"2020-03-21"},{"name":"boo","id":4,"date":"2020-03-14"},{"name":"foo","id":12,"date":"2020-05-07"},{"name":"boo","id":5,"date":"2020-02-19"},{"name":"far","id":10,"date":"2020-04-30"}]',
+        ],
+        'run-with-base-conf-and-custom-fields' => [
+            'options' => ['f' => 'testdata/basic.csv','d' => 'testdata/basic.conf', 'fields' => 'name,date'],
+            'expected' => '[{"name":"foo","date":"2020-05-03"},{"name":"foo","date":"2020-05-03"},{"name":"bar","date":"2020-03-21"},{"name":"boo","date":"2020-03-14"},{"name":"foo","date":"2020-05-07"},{"name":"boo","date":"2020-02-19"},{"name":"far","date":"2020-04-30"}]',
+        ],
+        'run-with-base-conf-and-aggregate' => [
+            'options' => ['f' => 'testdata/basic.csv','d' => 'testdata/basic.conf', 'aggregate' => 'date'],
+            'expected' => '{"2020-05-03":[{"name":"foo","id":5},{"name":"foo","id":9}],"2020-03-21":[{"name":"bar","id":1}],"2020-03-14":[{"name":"boo","id":4}],"2020-05-07":[{"name":"foo","id":12}],"2020-02-19":[{"name":"boo","id":5}],"2020-04-30":[{"name":"far","id":10}]}',
+        ],
+        'run-with-base-conf-and-pretty' => [
+            // ['pretty' => false] is returned getopt value with --pretty flag
+            'options' => ['f' => 'testdata/basic.csv','d' => 'testdata/basic.conf', 'pretty' => false],
+            'expected' => '[
+    {
+        "name": "foo",
+        "id": 5,
+        "date": "2020-05-03"
+    },
+    {
+        "name": "foo",
+        "id": 9,
+        "date": "2020-05-03"
+    },
+    {
+        "name": "bar",
+        "id": 1,
+        "date": "2020-03-21"
+    },
+    {
+        "name": "boo",
+        "id": 4,
+        "date": "2020-03-14"
+    },
+    {
+        "name": "foo",
+        "id": 12,
+        "date": "2020-05-07"
+    },
+    {
+        "name": "boo",
+        "id": 5,
+        "date": "2020-02-19"
+    },
+    {
+        "name": "far",
+        "id": 10,
+        "date": "2020-04-30"
+    }
+]',
+        ],
+    ];
+
+    foreach ($cases as $name => $c) {
+        $csv2json = new CSV2JSON($c['options']);
+        $json = $csv2json->run();
+
+        $report[$name] = $c['expected'] === $json
+        ? 'OK'
+        : sprintf("expected: %s\ngot: %s\n", $c['expected'], $json);
+    }
+}
+
+function test_CSV2JSON_run_with_exception(&$report)
+{
+    $cases = [
+        'forbidden-empty-value' => [
+            'options' => ['f' => 'testdata/forbidden-empty-value.csv','d' => 'testdata/forbidden-empty-value.conf'],
+            'message' => "column 'id' at line 2 cannot be empty",
+        ],
+        'invalid-date' => [
+            'options' => ['f' => 'testdata/invalid-date.csv','d' => 'testdata/invalid-date.conf'],
+            'message' => "at column 'createdat', value '2020-03' is not a valid date",
+        ],
+        'invalid-bool' => [
+            'options' => ['f' => 'testdata/invalid-bool.csv','d' => 'testdata/invalid-bool.conf'],
+            'message' => "at column active, value 'barf' is not a valid bool",
+        ]
+    ];
+
+    foreach ($cases as $name => $c) {
+        $throwed = false;
+        try {
+            $csv2json = new CSV2JSON($c['options']);
+            $csv2json->run();
+        } catch (\Exception $e) {
+            $throwed = true;
+            $report[$name] = $e->getMessage() === $c['message']
+            ? 'OK'
+            : sprintf("expected: %s\ngot: %s\n", $c['message'], $e->getMessage());
+        }
+        if (!$throwed) {
+            $report[$name] = 'exception not throwed';
+        }
+    }
+}
+
+function test_new_CSV2JSON_with_exception(&$report)
+{
+    $cases = [
+        'empty options' => [
+            'options' => [],
+            'message' => "could not read options: 'f' option missing",
+        ],
+        'missing-csv-file' => [
+            'options' => ['d' => 'testdata/basic.conf'],
+            'message' => "could not read options: 'f' option missing",
+        ],
+        'missing-desc-file' => [
+            'options' => ['f' => 'testdata/basic.csv'],
+            'message' => "could not read options: 'd' option missing",
+        ],
+        'non-existing-csv-file' => [
+            'options' => ['f' => 'non-existing', 'd' => 'testdata/basic.conf'],
+            'message' => "file 'non-existing' does not exists",
+        ],
+        'non-existing-desc-file' => [
+            'options' => ['f' => 'testdata/basic.csv', 'd' => 'non-existing'],
+            'message' => "file 'non-existing' does not exists",
+        ],
+        'unsupported-configured-type' => [
+            'options' => ['f' => 'testdata/basic.csv', 'd' => 'testdata/unsupported-type.conf'],
+            'message' => "invalid type 'foo' in desc config file",
+        ],
+        'invalid-aggregate' => [
+            'options' => ['f' => 'testdata/basic.csv', 'd' => 'testdata/basic.conf', 'aggregate' => 'dudu'],
+            'message' => "aggregate 'dudu' is not an existing field (name,id,date)",
+        ],
+        'extra-fields' => [
+            'options' => ['f' => 'testdata/basic.csv', 'd' => 'testdata/basic.conf', 'fields' => 'id,name,foobar'],
+            'message' => "could not map all fields",
+        ]
+    ];
+
+    foreach ($cases as $name => $c) {
+        $throwed = false;
+        try {
+            new CSV2JSON($c['options']);
+        } catch (\Exception $e) {
+            $throwed = true;
+            $report[$name] = $e->getMessage() === $c['message']
+            ? 'OK'
+            : sprintf("expected: %s\ngot: %s\n", $c['message'], $e->getMessage());
+        }
+        if (!$throwed) {
+            $report[$name] = 'exception not throwed';
+        }
+    }
+}
+
+function printReport($report)
+{
+    // filter in failed tests
+    $failed = array_filter($report, function ($r) {
+        return $r !== 'OK';
+    });
+
+    // print report
+    echo 'Tests executed: ' . count($report) . "\n\n";
+    if (!count($failed)) {
+        echo "All tests are successful !\n";
+    } else {
+        echo 'Tests KO: ' . count($failed) . "\n";
+        foreach ($failed as $name => $notmatch) {
+            echo sprintf("* %s\n", $name);
+            echo $notmatch . "\n";
+        }
+    }
+}

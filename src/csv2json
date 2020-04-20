@@ -1,0 +1,45 @@
+#!/usr/bin/env php
+<?php
+
+require 'CSV2JSON.php';
+
+$options = getopt('f:d:', ['aggregate::', 'desc:', 'fields::', 'pretty']);
+
+try {
+    $csv2json = new CSV2JSON($options);
+    echo $csv2json->run();
+} catch (\InvalidArgumentException $e) {
+    printError($e->getMessage(), false);
+    printUsage();
+} catch (\Exception $e) {
+    printError($e->getMessage());
+}
+
+function printError(string $e, bool $x = true): void
+{
+    echo sprintf("\033[31m error: %s\033[0m \n", $e);
+    if ($x) {
+        exit(1);
+    }
+}
+
+function printUsage(): void
+{
+    echo <<<EOF
+
+.o88b. .d8888. db    db .d888b.    d88b .d8888.  .d88b.  d8b   db
+d8P  Y8 88'  YP 88    88 VP  `8D    `8P' 88'  YP .8P  Y8. 888o  88
+8P      `8bo.   Y8    8P    odD'     88  `8bo.   88    88 88V8o 88
+8b        `Y8b. `8b  d8'  .88'       88    `Y8b. 88    88 88 V8o88
+Y8b  d8 db   8D  `8bd8'  j88.    db. 88  db   8D `8b  d8' 88  V888
+ `Y88P' `8888Y'    YP    888888D Y8888P  `8888Y'  `Y88P'  VP   V8P
+
+usage: csv2json -f <file_name> -d <types_description_file> [options]
+options:
+--fields=<field1,field2,...>: list of fields that must appears in the generated JSON (default: all fields)
+--aggregate=<field>: aggregate data on one field (default: no aggregate)
+--pretty: pretty format JSON output
+EOF;
+
+    exit(1);
+}

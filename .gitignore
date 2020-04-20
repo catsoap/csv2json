@@ -1,0 +1,8 @@
+# editors
+/.devcontainer
+
+# environment variables
+/.env
+
+# logs
+/.logs
