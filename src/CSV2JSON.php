@@ -215,8 +215,9 @@ class CSV2JSON
 
                 if (!$truthy && !$falsy) {
                     throw new \Exception(sprintf(
-                        "at column %s, value '%s' is not a valid bool",
+                        "column '%s' at line %d value '%s' is not a valid bool",
                         $column,
+                        $this->index,
                         $value,
                     ));
                 }
@@ -226,8 +227,9 @@ class CSV2JSON
                 preg_match(self::DATETIME_REGEXES[$type], $value, $matches);
                 if (empty($matches)) {
                     throw new \Exception(sprintf(
-                        "at column '%s', value '%s' is not a valid %s",
+                        "column '%s' at line %d value '%s' is not a valid %s",
                         $column,
+                        $this->index,
                         $value,
                         $type
                     ));
