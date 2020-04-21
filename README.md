@@ -1,5 +1,7 @@
 # CSV2JSON
 
+![Test](https://github.com/catsoap/csv2json/workflows/Test/badge.svg)
+
 CSV to JSON tool coding challenge.
 
 Announcement: https://twitter.com/FredBouchery/status/1250483472042467336  

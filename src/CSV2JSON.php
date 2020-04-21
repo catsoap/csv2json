@@ -86,7 +86,7 @@ class CSV2JSON
             : json_encode($this->data);
     }
 
-    private function addRow($item)
+    private function addRow($item): void
     {
         $item = array_filter($item, function ($key) {
             return array_key_exists($key, $this->columns);
@@ -126,7 +126,7 @@ class CSV2JSON
         $this->aggregate = $aggregate;
     }
 
-    private function initializeColumns(?string $fields) :void
+    private function initializeColumns(?string $fields): void
     {
         // take given fields option or csv header by default
         $head = $this->firstline($this->csvpath);
